@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema TPM</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background-color: #f0f2f5;
+    }
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        margin: 50px auto;
+    }
+    h1, h2 {
+        color: #2c3e50;
+        font-size: 28px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    label {
+        font-size: 18px;
+        display: inline-block;
+        margin-top: 10px;
+        width: 150px;
+    }
+    input {
+        font-size: 16px;
+        padding: 5px;
+        margin-top: 5px;
+        width: 200px;
+        box-sizing: border-box;
+        vertical-align: middle;
+    }
+    button {
+        font-size: 16px;
+        padding: 5px 10px;
+        margin-top: 10px;
+        background-color: #e0e0e0;
+        color: #333;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        cursor: pointer;
+        display: inline-block;
+        margin-left: 0;
+    }
+    .section {
+        display: none;
+    }
+    .visible {
+        display: block;
+    }
+    .area-block {
+        margin-top: 20px;
+        text-align: left;
+    }
+    .departments-scroll-area {
+        overflow-y: auto;
+        max-height: 600px;
+        padding-right: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .machines-scroll-area {
+        overflow-y: auto;
+        max-height: 600px;
+        padding-right: 10px;
+        margin-bottom: 20px;
+    }
+    
+    #maquinas_auto .machines-scroll-area {
+        max-height: 700px;
+        padding: 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+    .machine-item {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .machine-item:hover {
+        background-color: #f0f0f0;
+    }
+    
+    #maquinas_auto .machine-item {
+        margin: 20px 0;
+        padding: 30px;
+        background: linear-gradient(145deg, #ffffff, #f8f9fa);
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+        min-height: 160px;
+        backdrop-filter: blur(10px);
+    }
+    #maquinas_auto .machine-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: left 0.5s;
+    }
+    #maquinas_auto .machine-item:hover::before {
+        left: 100%;
+    }
+    #maquinas_auto .machine-item:hover {
+        transform: translateY(-10px) scale(1.03);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    }
+    .machine-item img {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+    }
+    
+    .machine-item span {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: color 0.3s ease;
+    }
+    
+    #maquinas_auto .machine-item img {
+        width: 140px;
+        height: 140px;
+        margin-right: 30px;
+        border-radius: 18px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        object-fit: cover;
+        transition: all 0.4s ease;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    #maquinas_auto .machine-item:hover img {
+        transform: rotate(3deg) scale(1.08);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        border: 3px solid rgba(255, 255, 255, 0.6);
+    }
+    
+    #maquinas_auto .machine-item span {
+        font-size: 22px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+    }
+    
+    #maquinas_auto .machine-item:hover span {
+        color: #3498db;
+        transform: translateX(5px);
+    }
+    
+    .auto-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .auto-header h2 {
+        margin: 0;
+        font-size: 42px;
+        font-weight: 700;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .auto-subtitle {
+        margin: 0;
+        font-size: 16px;
+        opacity: 0.9;
+        font-weight: 300;
+    }
+    
+    .auto-actions {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 30px;
+        padding: 20px;
+    }
+    
+    .mantenimiento-btn-modern, .back-btn-modern {
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .mantenimiento-btn-modern {
+        background: linear-gradient(145deg, #27ae60, #2ecc71);
+        color: white;
+    }
+    
+    .back-btn-modern {
+        background: linear-gradient(145deg, #95a5a6, #bdc3c7);
+        color: #2c3e50;
+    }
+    
+    .mantenimiento-btn-modern:hover, .back-btn-modern:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    }
+    
+    .mantenimiento-btn-modern::before, .back-btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+    
+    .mantenimiento-btn-modern:hover::before, .back-btn-modern:hover::before {
+        left: 100%;
+    }
+    
+    /* Responsive Design para Móviles */
+    @media (max-width: 768px) {
+        .container {
+            max-width: 95%;
+            padding: 15px;
+            margin: 10px auto;
+        }
+        
+        .auto-header h2 {
+            font-size: 28px;
+        }
+        
+        #maquinas_auto .machines-scroll-area {
+            padding: 15px;
+            max-height: 60vh;
+        }
+        
+        #maquinas_auto .machine-item {
+            padding: 20px;
+            min-height: 120px;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        #maquinas_auto .machine-item img {
+            width: 100px;
+            height: 100px;
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+        
+        #maquinas_auto .machine-item span {
+            font-size: 18px;
+        }
+        
+        .auto-actions {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .mantenimiento-btn-modern, .back-btn-modern {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+        }
+        
+        /* Ajustes para otras secciones */
+        .machine-item {
+            padding: 15px;
+        }
+        
+        .machine-item img {
+            width: 40px;
+            height: 40px;
+        }
+        
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            min-height: 44px;
+        }
+        
+        .departments-scroll-area, .machines-scroll-area {
+            max-height: 50vh;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .auto-header h2 {
+            font-size: 24px;
+        }
+        
+        #maquinas_auto .machine-item img {
+            width: 80px;
+            height: 80px;
+        }
+        
+        #maquinas_auto .machine-item span {
+            font-size: 16px;
+        }
+        
+        .container {
+            padding: 10px;
+        }
+    }
+    .checkbox-container {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 10px;
+        margin-left: 10px;
+    }
+    .checkbox-container input[type="checkbox"] {
+        width: auto;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+    .checkbox-container label {
+        width: auto;
+        margin-top: 0;
+        display: inline-block;
+    }
+    /* Estilos para el campo de contraseña con el ojo */
+    .password-wrapper {
+        position: relative;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .password-wrapper input {
+        padding-right: 30px;
+        width: 200px;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #555;
+        font-size: 1.2em;
+        line-height: 1;
+    }
+    /* Estilo para la sección de desarrollador */
+    .developer-login {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    .developer-login h3 {
+        color: #555;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    .mantenimiento-btn {
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        margin: 30px auto;
+        padding: 15px 20px;
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+        background-color: #2c3e50;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        transition: background-color 0.3s ease;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+    }
+    .mantenimiento-btn:hover {
+        background-color: #34495e;
+    }
+    /* Estilos para el historial */
+    .historial-item-btn {
+        background: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        text-align: left;
+        cursor: pointer;
+        width: 100%;
+        box-sizing: border-box;
+        transition: background-color 0.3s ease;
+    }
+    .historial-item-btn:hover {
+        background: #e9e9e9;
+    }
+    .graficas-section {
+        margin-top: 40px;
+        border-top: 1px solid #ccc;
+        padding-top: 20px;
+    }
+    .grafica-container {
+        width: 80%;
+        margin: 20px auto;
+    }
+     .foto-preview {
+    max-width: 200px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.foto-preview:hover {
+    transform: scale(1.05);
+}
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+.modal img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 10px;
+    box-shadow: 0 0 15px #000;
+}
+.modal .controls {
+    margin-top: 15px;
+    text-align: center;
+}
+.modal button {
+        background: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.modal button:hover {
+    background: #ddd;
+}
+    /* NUEVOS ESTILOS PARA LA SECCIÓN DE MANTENIMIENTO */
+    .mantenimiento-form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    .form-group label {
+        width: auto;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+        box-sizing: border-box;
+    }
+    .form-group textarea {
+        height: 100px;
+        resize: vertical;
+    }
+    .mantenimiento-form-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .mantenimiento-form-buttons button {
+        padding: 12px 20px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+    .mantenimiento-form-buttons button:hover {
+        transform: translateY(-2px);
+    }
+    .save-button {
+        background-color: #28a745;
+        color: white;
+    }
+    .save-button:hover {
+        background-color: #218838;
+    }
+    .back-button {
+        background-color: #6c757d;
+        color: white;
+    }
+    .back-button:hover {
+        background-color: #5a6268;
+    }
+    .file-upload-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e0e0e0;
+    }
+    /* ESTILOS PARA EL MINI BUSCADOR DEL HISTORIAL */
+    .historial-search-container {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .historial-search-container h4 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #495057;
+        font-size: 18px;
+    }
+    .search-filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    .search-filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+    .search-filter-group label {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #495057;
+        width: auto;
+    }
+    .search-filter-group input,
+    .search-filter-group select {
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .search-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    .search-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s ease;
+    }
+    .search-btn.primary {
+        background-color: #007bff;
+        color: white;
+    }
+    .search-btn.primary:hover {
+        background-color: #0056b3;
+    }
+    .search-btn.secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    .search-btn.secondary:hover {
+        background-color: #545b62;
+    }
+    .search-results-info {
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        font-size: 14px;
+        color: #495057;
+    }
+    /* ESTILOS PARA EL PANEL DE AYUDA DE GRÁFICAS */
+    .filtros-panel {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .filtros-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .filtro-grupo {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .filtro-grupo label {
+        font-weight: bold;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+    
+    .filtro-grupo select {
+        padding: 10px;
+        border: 2px solid #bdc3c7;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+    
+    .filtro-grupo select:focus {
+        border-color: #3498db;
+        outline: none;
+        box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+    }
+    
+    .btn-reset {
+        padding: 12px 20px;
+        background: linear-gradient(145deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+    }
+    
+    .btn-reset:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+    }
+    .graficas-help-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .graficas-help-panel h3 {
+        margin-top: 0;
+        color: white;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .help-filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .help-filter-card {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        padding: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    .help-filter-card:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-2px);
+    }
+    .help-filter-card.active {
+        background: rgba(255,255,255,0.25);
+        border-color: rgba(255,255,255,0.5);
+    }
+    .help-filter-card h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .help-filter-card p {
+        margin: 0;
+        font-size: 13px;
+        opacity: 0.9;
+        line-height: 1.4;
+    }
+    .graficas-explanation {
+        background: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        backdrop-filter: blur(10px);
+    }
+    .graficas-explanation h4 {
+        margin-top: 0;
+        color: #FFE4B5;
+    }
+</style>
+
+<div id="fotoModal" class="modal" onclick="cerrarModal()">
+  <img id="fotoModalImg" src=""/>
+</div>
+
+<script>
+function ampliarFoto(src) {
+    const modal = document.getElementById("fotoModal");
+    const modalImg = document.getElementById("fotoModalImg");
+    modal.style.display = "flex";
+    modalImg.src = src;
+}
+function cerrarModal() {
+    document.getElementById("fotoModal").style.display = "none";
+}
+</script>
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Variables globales
+    let historialMantenimientos = [];
+    let charts = {};
+
+    // Cargar historial desde localStorage
+    function cargarHistorial() {
+        const historialGuardado = localStorage.getItem('historialMantenimientos');
+        if (historialGuardado) {
+            try {
+                historialMantenimientos = JSON.parse(historialGuardado) || [];
+            } catch (e) {
+                historialMantenimientos = [];
+            }
+        } else {
+            historialMantenimientos = [];
+        }
+        renderizarHistorial();
+    }
+
+    function handleEnter(event, nextElementId, buttonId) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            if (nextElementId) {
+                document.getElementById(nextElementId).focus();
+            } else if (buttonId) {
+                document.getElementById(buttonId).click();
+            }
+        }
+    }
+
+    function mostrarSeccion(id) {
+        const secciones = document.querySelectorAll('.section');
+        secciones.forEach(sec => sec.classList.remove('visible'));
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.classList.add('visible');
+            localStorage.setItem('lastSectionId', id);
+            history.pushState({ section: id }, '', '#' + id);
+        } else {
+            console.warn('Sección no encontrada:', id);
+        }
+        if (id === 'developer_mode') {
+            const hist = document.getElementById('historial');
+            if (hist) {
+                hist.style.display = 'none';
+            }
+            const toggleBtn = document.getElementById('toggleHistorialBtn');
+            if (toggleBtn) toggleBtn.innerText = 'Ver Historial';
+            renderizarTodo(); // Llamada inicial para renderizar con los filtros por defecto
+        }
+    }
+
+    function toggleHistorial() {
+        const historialDiv = document.getElementById('historial');
+        const toggleBtn = document.getElementById('toggleHistorialBtn');
+        if (!historialDiv) return;
+        if (historialDiv.style.display === 'none' || historialDiv.style.display === '') {
+            historialDiv.style.display = 'block';
+            toggleBtn.innerText = 'Ocultar Historial';
+            renderizarTodo();
+        } else {
+            historialDiv.style.display = 'none';
+            toggleBtn.innerText = 'Ver Historial';
+        }
+    }
+
+    window.onpopstate = function(event) {
+        if (event.state && event.state.section) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => sec.classList.remove('visible'));
+            const el = document.getElementById(event.state.section);
+            if (el) el.classList.add('visible');
+            localStorage.setItem('lastSectionId', event.state.section);
+        } else {
+            mostrarSeccion('login');
+        }
+    };
+
+    function togglePasswordVisibility(id) {
+        const passwordField = document.getElementById(id);
+        const toggleIcon = passwordField.nextElementSibling;
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.textContent = '🙈';
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.textContent = '👁️';
+        }
+    }
+
+    function validarLogin() {
+        const reloj = document.getElementById('reloj').value;
+        const pass = document.getElementById('pass').value;
+        const usuarios = {
+            "67991": "1234",
+            "45670": "abcd",
+            "70654": "222",
+            "22222": "maria123"
+        };
+        if (usuarios[reloj] === pass) {
+            if (document.getElementById('rememberLogin').checked) {
+                localStorage.setItem('savedReloj', reloj);
+                localStorage.setItem('savedPass', pass);
+                localStorage.setItem('rememberLoginChecked', 'true');
+            } else {
+                localStorage.removeItem('savedReloj');
+                localStorage.removeItem('savedPass');
+                localStorage.removeItem('rememberLoginChecked');
+            }
+            mostrarSeccion('areas');
+        } else {
+            alert("Credenciales incorrectas");
+        }
+    }
+
+    function validarArea(areaId) {
+        const pass = document.getElementById('area_pass_' + areaId).value;
+        const contrasenas = {
+            "1": "auto2024",
+            "2": "manu2024",
+            "3": "equipo2024",
+            "4": "pth2024",
+            "5": "aoi2024"
+        };
+        if (contrasenas[areaId] === pass) {
+            if (document.getElementById('rememberDept_' + areaId).checked) {
+                localStorage.setItem('savedDeptPass_' + areaId, pass);
+                localStorage.setItem('rememberDeptChecked_' + areaId, 'true');
+            } else {
+                localStorage.removeItem('savedDeptPass_' + areaId);
+                localStorage.removeItem('rememberDeptChecked_' + areaId);
+            }
+            if (areaId === "1") {
+                mostrarSeccion('maquinas_auto');
+            } else if (areaId === "3") {
+                mostrarSeccion('maquinas_equipo');
+            } else {
+                alert("Área aún no tiene funcionalidades activas.");
+            }
+        } else {
+            alert("Contraseña del área incorrecta");
+        }
+    }
+
+    function validarDesarrollador() {
+        const devReloj = document.getElementById('dev_reloj').value;
+        const devPass = document.getElementById('dev_pass').value;
+        const credencialesDesarrollador = {
+            "DV": "FOX25"
+        };
+        if (credencialesDesarrollador[devReloj] === devPass) {
+            if (document.getElementById('rememberDevLogin').checked) {
+                localStorage.setItem('savedDevReloj', devReloj);
+                localStorage.setItem('savedDevPass', devPass);
+                localStorage.setItem('rememberDevLoginChecked', 'true');
+            } else {
+                localStorage.removeItem('savedDevReloj');
+                localStorage.removeItem('savedDevPass');
+                localStorage.removeItem('rememberDevLoginChecked');
+            }
+            mostrarSeccion('developer_mode');
+        } else {
+            alert("Credenciales de desarrollador incorrectas.");
+        }
+    }
+
+    function mostrarSpare(maquina, seccion) {
+        document.getElementById('spare_title').innerText = "Spare Parts de " + maquina;
+        mostrarSeccion('spare');
+    }
+
+    function goBack() {
+        history.back();
+    }
+
+    function mostrarDetalleMaquina(maquina, imagen) {
+        const maquinaDetalleSection = document.getElementById('maquina_detalle');
+        const maquinaDetalleTitle = document.getElementById('maquina_detalle_title');
+        const maquinaDetalleImage = document.getElementById('maquina_detalle_image');
+        maquinaDetalleTitle.innerText = maquina;
+        if (imagen) {
+            maquinaDetalleImage.src = imagen;
+            maquinaDetalleImage.style.display = 'block';
+        } else {
+            maquinaDetalleImage.style.display = 'none';
+        }
+        mostrarSeccion('maquina_detalle');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let initialSection = 'login';
+        history.replaceState({ section: initialSection }, '', '#' + initialSection);
+        mostrarSeccion(initialSection);
+        const savedReloj = localStorage.getItem('savedReloj');
+        const savedPass = localStorage.getItem('savedPass');
+        const rememberLoginChecked = localStorage.getItem('rememberLoginChecked');
+        if (savedReloj && savedPass && rememberLoginChecked === 'true') {
+            document.getElementById('reloj').value = savedReloj;
+            document.getElementById('pass').value = savedPass;
+            document.getElementById('rememberLogin').checked = true;
+        }
+        const savedDevReloj = localStorage.getItem('savedDevReloj');
+        const savedDevPass = localStorage.getItem('savedDevPass');
+        const rememberDevLoginChecked = localStorage.getItem('rememberDevLoginChecked');
+        if (savedDevReloj && savedDevPass && rememberDevLoginChecked === 'true') {
+            document.getElementById('dev_reloj').value = savedDevReloj;
+            document.getElementById('dev_pass').value = savedDevPass;
+            document.getElementById('rememberDevLogin').checked = true;
+        }
+        document.querySelectorAll('.area-block input[type="password"]').forEach(input => {
+            const areaId = input.id.replace('area_pass_', '');
+            const savedDeptPass = localStorage.getItem('savedDeptPass_' + areaId);
+            const rememberDeptChecked = localStorage.getItem('rememberDeptChecked_' + areaId);
+            if (savedDeptPass && rememberDeptChecked === 'true') {
+                input.value = savedDeptPass;
+                document.getElementById('rememberDept_' + areaId).checked = true;
+            }
+        });
+
+        // Cargar historial al iniciar (no lo mostramos automáticamente a menos que estemos en developer_mode)
+        cargarHistorial();
+    });
+
+    const usuarios = {
+        "67991": "Usuario A",
+        "45670": "Usuario B",
+        "70654": "Jxx",
+        "22222": "maria123"
+    };
+    
+    const maquinasPorLinea = {
+        "J01": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J02": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J03": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J05": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J06": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J08": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J09": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J10": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"],
+        "J11": ["Cargador", "Conveyors", "Ensamble Manual", "Load Tray", "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle", "Yazcawa", "Kuka/CPU Assembly"]
+    };
+
+    const imagenesMaquinas = {
+        "Cargador": "image_e37a60.png",
+        "Conveyors": "image_ee7644.png",
+        "Rotador": "image_87f926.png",
+        "Ensamble Manual": "image_880f8f.png",
+        "Load Tray": "image_886a7a.png",
+        "Insert y Remove Pallet": "image_insert_remove.png",
+        "Sliding": "image_dfd1c2.png",
+        "Carrier Machine": "image_dfdd22.png",
+        "Shuttle": "image_e03a80.png",
+        "Yazcawa": "image_ec8885.png",
+        "Kuka/CPU Assembly": "image_ec0027.png",
+        "Volteador": "image_ec0127.png",
+        "Battery": "image_ec0227.png",
+        "Banda de FT": "image_ec0327.png",
+        "Buffer": "image_ec0427.png",
+        "Orbitales FT": "image_ec0527.png",
+        "Orbitales ICT": "image_ec0627.png",
+        "Elevador de FT": "image_ec0727.png",
+        "Elevador Aéreo": "image_ec0827.png",
+        "Conveyor Aéreo": "image_ec0927.png",
+        "Conveyor de Retorno": "image_ef5127.png",
+        "Lava Stencil": "image_5dd18a.png",
+        "Lava Pallets": "image_5e4265.png",
+        "Laser Machine / Selladoras": "image_5e45ea.png",
+        "GENITEC": "image_5f3283.png",
+        "Router": "image_5f496b.png"
+    };
+
+    function mostrarNombreUsuario(lineId) {
+        const reloj = document.getElementById('reloj' + lineId).value;
+        const nombreInput = document.getElementById('nombreUsuario' + lineId);
+        if (usuarios[reloj]) {
+            nombreInput.value = usuarios[reloj];
+        } else {
+            nombreInput.value = "Usuario no encontrado";
+        }
+    }
+
+    // ---- CAMBIO CLAVE: guardarMantenimiento guarda imágenes en Base64 ----
+    function guardarMantenimiento(lineId) {
+        const reloj = document.getElementById('reloj' + lineId).value;
+        const nombre = document.getElementById('nombreUsuario' + lineId).value;
+        const maquina = document.getElementById("maquinasHoy" + lineId).value;
+        const frecuencia = document.getElementById("frecuenciaMantenimiento" + lineId).value;
+        const tipoMantenimiento = document.getElementById("tipoMantenimiento" + lineId).value;
+        const linea = document.getElementById("lineaMantenimiento").value; // Obtener la línea del dropdown en la sección de mantenimiento
+        
+        const fotosAntes = document.getElementById("fotosAntes" + lineId).files;
+        const fotosDespues = document.getElementById("fotosDespues" + lineId).files;
+
+        if (reloj === "" || nombre === "Usuario no encontrado" || maquina === "") {
+            alert("Por favor, completa los campos obligatorios: Número de reloj, Nombre de la persona y Máquina.");
+            return;
+        }
+        
+        const fecha = new Date().toLocaleString();
+
+        // Convierte FileList a array de dataURLs usando Promise
+        function convertirABase64(files) {
+            return new Promise(resolve => {
+                const resultados = [];
+                if (!files || files.length === 0) {
+                    resolve([]);
+                    return;
+                }
+                let pendientes = files.length;
+                for (let i = 0; i < files.length; i++) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        resultados.push(e.target.result);
+                        pendientes--;
+                        if (pendientes === 0) resolve(resultados);
+                    };
+                    reader.onerror = function() {
+                        pendientes--;
+                        if (pendientes === 0) resolve(resultados);
+                    };
+                    reader.readAsDataURL(files[i]);
+                }
+            });
+        }
+
+        Promise.all([convertirABase64(fotosAntes), convertirABase64(fotosDespues)])
+            .then(([imagenesAntes, imagenesDespues]) => {
+                const nuevoMantenimiento = {
+                    fecha,
+                    reloj,
+                    nombre,
+                    maquina,
+                    frecuencia,
+                    tipoMantenimiento,
+                    comentarios: document.getElementById("comentarios_" + lineId) ? document.getElementById("comentarios_" + lineId).value : "Sin comentarios",
+                    fotosAntes: imagenesAntes,
+                    fotosDespues: imagenesDespues,
+                    linea: linea
+                };
+
+                historialMantenimientos.push(nuevoMantenimiento);
+                localStorage.setItem('historialMantenimientos', JSON.stringify(historialMantenimientos));
+
+                // Limpiar campos
+                document.getElementById('reloj' + lineId).value = "";
+                document.getElementById('nombreUsuario' + lineId).value = "";
+                document.getElementById("maquinasHoy" + lineId).value = "";
+                document.getElementById("frecuenciaMantenimiento" + lineId).value = "semanal";
+                document.getElementById("tipoMantenimiento" + lineId).value = "Preventivo";
+                document.getElementById("fotosAntes" + lineId).value = "";
+                document.getElementById("fotosDespues" + lineId).value = "";
+                if (document.getElementById("comentarios_" + lineId)) document.getElementById("comentarios_" + lineId).value = "";
+
+                alert("Mantenimiento guardado con éxito.");
+            })
+            .catch(err => {
+                console.error("Error guardando imágenes:", err);
+                alert("Ocurrió un error al procesar las imágenes.");
+            });
+    }
+    // ---- FIN CAMBIO CLAVE ----
+
+    function verMaquinaSeleccionada(lineId) {
+        const maquina = document.getElementById("maquinasHoy" + lineId).value;
+        if (maquina) {
+            const imagenUrl = imagenesMaquinas[maquina] || null;
+            mostrarDetalleMaquina(maquina, imagenUrl);
+        } else {
+            alert("Por favor, selecciona una máquina.");
+        }
+    }
+
+    const lineasPorDepartamento = {
+        'auto': ["J01", "J02", "J03", "J05", "J06", "J08", "J09", "J10", "J11"],
+        'manu': [], // No hay líneas definidas para manufactura
+        'equipo': [], // No hay líneas específicas, se filtra por máquinas directamente
+        'pth': [], // Sin líneas
+        'aoi': [] // Sin líneas
+    };
+    
+    const maquinasPorDepartamento = {
+        'auto': [
+            "Cargador", "Conveyors", "Rotador", "Ensamble Manual", "Load Tray",
+            "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle",
+            "Yazcawa", "Kuka/CPU Assembly", "Volteador", "Battery", "Banda de FT",
+            "Buffer", "Orbitales FT", "Orbitales ICT", "Elevador de FT",
+            "Elevador Aéreo", "Conveyor Aéreo", "Conveyor de Retorno",
+            "Lava Stencil", "Lava Pallets", "Laser Machine / Selladoras"
+        ],
+        'manu': [
+            "Cargador", "Conveyors", "Rotador", "Ensamble Manual", "Load Tray",
+            "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle"
+        ],
+        'equipo': [
+            "Panasonic", "Fuzion", "Axxon", "GKG", "GENITEC", "Heller", "Router", "PTF"
+        ],
+        'pth': [
+            "Yazcawa", "Kuka/CPU Assembly", "Volteador", "Battery", "Banda de FT",
+            "Buffer", "Orbitales FT", "Orbitales ICT", "Elevador de FT"
+        ],
+        'aoi': [
+            "Elevador Aéreo", "Conveyor Aéreo", "Conveyor de Retorno",
+            "Lava Stencil", "Lava Pallets", "Laser Machine / Selladoras"
+        ],
+        'todos': [
+            "Cargador", "Conveyors", "Rotador", "Ensamble Manual", "Load Tray",
+            "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle",
+            "Yazcawa", "Kuka/CPU Assembly", "Volteador", "Battery", "Banda de FT",
+            "Buffer", "Orbitales FT", "Orbitales ICT", "Elevador de FT",
+            "Elevador Aéreo", "Conveyor Aéreo", "Conveyor de Retorno",
+            "Lava Stencil", "Lava Pallets", "Laser Machine / Selladoras",
+            "Panasonic", "Fuzion", "Axxon", "GKG", "GENITEC", "Heller", "Router", "PTF"
+        ]
+    };
+    
+    // Función para actualizar las opciones de línea en base al departamento
+    function actualizarLineasPorDepartamento() {
+        const selectedDept = document.getElementById('departamentoDesarrolladorSelect').value;
+        const lineaSelect = document.getElementById('lineaDesarrolladorSelect');
+        const lineas = lineasPorDepartamento[selectedDept] || [];
+        
+        lineaSelect.innerHTML = '<option value="todos">Todas las líneas</option>';
+        if (lineas.length > 0) {
+            lineas.forEach(linea => {
+                const option = document.createElement('option');
+                option.value = linea;
+                option.textContent = linea;
+                lineaSelect.appendChild(option);
+            });
+        }
+        
+        // También actualizar las máquinas en el buscador si existe
+        actualizarMaquinasPorDepartamento(selectedDept);
+        
+        renderizarTodo(); // Llama a renderizar cada vez que cambia el departamento
+    }
+
+    // Variables para el buscador
+    let historialFiltradoBusqueda = [];
+    
+    function renderizarHistorial(selectedDept, selectedLine) {
+        const historialDiv = document.getElementById('historial');
+        if (!historialDiv) return;
+        
+        // Crear el contenedor del buscador
+        const searchContainer = crearMiniBuscador();
+        
+        historialDiv.innerHTML = '<h3>Historial de Mantenimientos</h3>';
+        historialDiv.appendChild(searchContainer);
+        
+        let historialFiltrado = historialMantenimientos;
+
+        // Filtrar por departamento
+        if (selectedDept && selectedDept !== 'todos') {
+             if (selectedDept === 'auto') {
+                historialFiltrado = historialFiltrado.filter(reg => 
+                    maquinasPorDepartamento['auto'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'equipo') {
+                historialFiltrado = historialFiltrado.filter(reg => 
+                    maquinasPorDepartamento['equipo'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'manu') {
+                historialFiltrado = historialFiltrado.filter(reg => 
+                    maquinasPorDepartamento['manu'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'pth') {
+                historialFiltrado = historialFiltrado.filter(reg => 
+                    maquinasPorDepartamento['pth'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'aoi') {
+                historialFiltrado = historialFiltrado.filter(reg => 
+                    maquinasPorDepartamento['aoi'].includes(reg.maquina)
+                );
+            } else {
+                historialFiltrado = []; // Otros departamentos sin datos de ejemplo
+            }
+        }
+
+        // Filtrar por línea si se ha seleccionado una
+        if (selectedLine && selectedLine !== 'todos') {
+            historialFiltrado = historialFiltrado.filter(reg => reg.linea === selectedLine);
+        }
+        
+        // Guardar el historial filtrado para el buscador
+        historialFiltradoBusqueda = historialFiltrado;
+        
+        // Renderizar la lista
+        renderizarListaHistorial(historialFiltrado, historialDiv);
+    }
+    
+    function renderizarListaHistorial(registros, contenedor) {
+        // Remover lista anterior si existe
+        const listaAnterior = contenedor.querySelector('.historial-lista');
+        if (listaAnterior) {
+            listaAnterior.remove();
+        }
+        
+        // Remover info anterior si existe
+        const infoAnterior = contenedor.querySelector('.search-results-info');
+        if (infoAnterior) {
+            infoAnterior.remove();
+        }
+        
+        if (!registros || registros.length === 0) {
+            const noResultados = document.createElement('p');
+            noResultados.textContent = 'No hay registros de mantenimiento que coincidan con los criterios.';
+            noResultados.className = 'historial-lista';
+            contenedor.appendChild(noResultados);
+            return;
+        }
+        
+        // Crear info de resultados
+        const resultadosInfo = document.createElement('div');
+        resultadosInfo.className = 'search-results-info';
+        resultadosInfo.textContent = `Mostrando ${registros.length} registro(s) de mantenimiento`;
+        contenedor.appendChild(resultadosInfo);
+
+        const lista = document.createElement('ul');
+        lista.className = 'historial-lista';
+        registros.forEach((registro, index) => {
+            const originalIndex = historialMantenimientos.findIndex(reg => reg.fecha === registro.fecha && reg.reloj === registro.reloj && reg.maquina === registro.maquina);
+            const item = document.createElement('li');
+            const button = document.createElement('button');
+            button.className = 'historial-item-btn';
+            button.setAttribute('onclick', `mostrarDetalleMantenimiento(${originalIndex})`);
+            button.innerHTML = `
+                <strong>Fecha:</strong> ${registro.fecha}<br>
+                <strong>Empleado:</strong> ${registro.reloj} - ${registro.nombre}<br>
+                <strong>Línea:</strong> ${registro.linea}<br>
+                <strong>Máquina:</strong> ${registro.maquina}<br>
+                <strong>Tipo:</strong> ${registro.tipoMantenimiento}
+            `;
+            item.appendChild(button);
+            lista.appendChild(item);
+        });
+        contenedor.appendChild(lista);
+    }
+    
+    // Mostrar detalle y renderizar imágenes Base64 si existen
+    function mostrarDetalleMantenimiento(index) {
+        const registro = historialMantenimientos[index];
+        const detalleContent = document.getElementById('detalle_content');
+        
+        if (!registro) {
+            alert("Registro no encontrado.");
+            return;
+        }
+
+        let fotosAntesHtml = registro.fotosAntes && registro.fotosAntes.length > 0 
+    ? registro.fotosAntes.map(src => `<img src="${src}" class="foto-preview" onclick="ampliarFoto('${src}')"/>`).join("")
+    : "<p>No hay fotos antes</p>";
+
+let fotosDespuesHtml = registro.fotosDespues && registro.fotosDespues.length > 0 
+    ? registro.fotosDespues.map(src => `<img src="${src}" class="foto-preview" onclick="ampliarFoto('${src}')"/>`).join("")
+    : "<p>No hay fotos después</p>";
+
+        detalleContent.innerHTML = `
+            <h3>Detalle del Mantenimiento</h3>
+            <p><strong>Fecha y Hora:</strong> ${registro.fecha}</p>
+            <p><strong>Número de Reloj:</strong> ${registro.reloj}</p>
+            <p><strong>Nombre:</strong> ${registro.nombre}</p>
+            <p><strong>Línea:</strong> ${registro.linea}</p>
+            <p><strong>Máquina:</strong> ${registro.maquina}</p>
+            <p><strong>Frecuencia:</strong> ${registro.frecuencia}</p>
+            <p><strong>Tipo de Mantenimiento:</strong> ${registro.tipoMantenimiento}</p>
+            <p><strong>Comentarios:</strong> ${registro.comentarios || ''}</p>
+            <h4>Fotos Antes:</h4>
+            <div>${fotosAntesHtml}</div>
+            <h4>Fotos Después:</h4>
+            <div>${fotosDespuesHtml}</div>
+        `;
+        
+        // mostrarSeccion con id de primer nivel
+        mostrarSeccion('detalle_mantenimiento');
+    }
+    
+    function renderizarGraficas(selectedDept, selectedLine) {
+        // Usar los filtros del panel
+        const filtroPeriodo = document.getElementById('filtroPeriodo') ? document.getElementById('filtroPeriodo').value : 'todos';
+        const filtroTipo = document.getElementById('filtroTipo') ? document.getElementById('filtroTipo').value : 'todos';
+        const filtroAnalisis = document.getElementById('filtroAnalisis') ? document.getElementById('filtroAnalisis').value : 'todos';
+        
+        renderizarGraficasConFiltros(selectedDept, selectedLine, filtroPeriodo, filtroTipo, filtroAnalisis);
+    }
+    
+    function renderizarGraficasConFiltros(selectedDept, selectedLine, filtroPeriodo, filtroTipo, filtroAnalisis) {
+        let datosFiltrados = [...historialMantenimientos];
+        const ahora = new Date();
+        
+        console.log('Iniciando filtrado con:', { selectedDept, selectedLine, filtroPeriodo, filtroTipo, filtroAnalisis });
+        console.log('Filtro de línea activo:', selectedLine);
+        console.log('Datos iniciales:', datosFiltrados.length);
+        
+        // Filtro por período de tiempo
+        if (filtroPeriodo !== 'todos') {
+            let diasAtras;
+            switch(filtroPeriodo) {
+                case 'semana': diasAtras = 7; break;
+                case 'mes': diasAtras = 30; break;
+                case 'trimestre': diasAtras = 90; break;
+                case 'semestre': diasAtras = 180; break;
+                case 'año': diasAtras = 365; break;
+                default: diasAtras = null;
+            }
+            
+            if (diasAtras) {
+                const fechaLimite = new Date(ahora.getTime() - diasAtras * 24 * 60 * 60 * 1000);
+                datosFiltrados = datosFiltrados.filter(reg => {
+                    const fechaRegistro = new Date(reg.fecha);
+                    return !isNaN(fechaRegistro.getTime()) && fechaRegistro >= fechaLimite;
+                });
+                console.log(`Después de filtro de tiempo (${filtroPeriodo}):`, datosFiltrados.length);
+            }
+        }
+        
+        // Filtro por tipo de mantenimiento
+        if (filtroTipo !== 'todos') {
+            datosFiltrados = datosFiltrados.filter(reg => {
+                return reg.tipoMantenimiento && reg.tipoMantenimiento.toLowerCase() === filtroTipo.toLowerCase();
+            });
+            console.log(`Después de filtro de tipo (${filtroTipo}):`, datosFiltrados.length);
+        }
+        
+        // Filtro de análisis especial
+        if (filtroAnalisis !== 'todos') {
+            const conteoMaquinas = {};
+            historialMantenimientos.forEach(reg => {
+                if (reg.maquina) {
+                    conteoMaquinas[reg.maquina] = (conteoMaquinas[reg.maquina] || 0) + 1;
+                }
+            });
+            
+            let umbral = filtroAnalisis === 'problematicas' ? 5 : 10;
+            const maquinasEspeciales = Object.keys(conteoMaquinas).filter(maquina => conteoMaquinas[maquina] > umbral);
+            datosFiltrados = datosFiltrados.filter(reg => maquinasEspeciales.includes(reg.maquina));
+            console.log(`Después de filtro de análisis (${filtroAnalisis}):`, datosFiltrados.length);
+        }
+        
+        // Filtrar por departamento
+        console.log(`Aplicando filtro de departamento: ${selectedDept}`);
+        if (selectedDept && selectedDept !== 'todos') {
+             if (selectedDept === 'auto') {
+                datosFiltrados = datosFiltrados.filter(reg => 
+                    maquinasPorDepartamento['auto'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'equipo') {
+                datosFiltrados = datosFiltrados.filter(reg => 
+                    maquinasPorDepartamento['equipo'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'manu') {
+                datosFiltrados = datosFiltrados.filter(reg => 
+                    maquinasPorDepartamento['manu'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'pth') {
+                datosFiltrados = datosFiltrados.filter(reg => 
+                    maquinasPorDepartamento['pth'].includes(reg.maquina)
+                );
+            } else if (selectedDept === 'aoi') {
+                datosFiltrados = datosFiltrados.filter(reg => 
+                    maquinasPorDepartamento['aoi'].includes(reg.maquina)
+                );
+            } else {
+                datosFiltrados = [];
+            }
+            console.log(`Después de filtro de departamento (${selectedDept}):`, datosFiltrados.length);
+        }
+        
+        // Filtrar por línea si se ha seleccionado una
+        if (selectedLine && selectedLine !== 'todos') {
+            datosFiltrados = datosFiltrados.filter(reg => reg.linea === selectedLine);
+            console.log(`Después de filtro de línea (${selectedLine}):`, datosFiltrados.length);
+        }
+
+        // Debug: Verificar datos filtrados
+        console.log('Datos filtrados para gráficas:', datosFiltrados.length);
+        console.log('Primeros 3 registros:', datosFiltrados.slice(0, 3));
+        
+        const maquinasData = {};
+        const tiposData = {};
+
+        // Contar mantenimientos por máquina y tipo
+        datosFiltrados.forEach(registro => {
+            if (registro && registro.maquina && registro.tipoMantenimiento) {
+                maquinasData[registro.maquina] = (maquinasData[registro.maquina] || 0) + 1;
+                tiposData[registro.tipoMantenimiento] = (tiposData[registro.tipoMantenimiento] || 0) + 1;
+            } else {
+                console.warn('Registro con datos faltantes:', registro);
+            }
+        });
+        
+        console.log('Conteo de máquinas:', maquinasData);
+        console.log('Conteo de tipos:', tiposData);
+
+        const maquinasLabels = Object.keys(maquinasData);
+        const maquinasValues = Object.values(maquinasData);
+        
+        const tiposLabels = Object.keys(tiposData);
+        const tiposValues = Object.values(tiposData);
+        
+        // Debug: Verificar datos para las gráficas
+        console.log('Labels de máquinas:', maquinasLabels);
+        console.log('Valores de máquinas:', maquinasValues);
+        console.log('Labels de tipos:', tiposLabels);
+        console.log('Valores de tipos:', tiposValues);
+
+        const maquinasCtx = document.getElementById('maquinasChart') ? document.getElementById('maquinasChart').getContext('2d') : null;
+        if (maquinasCtx && maquinasLabels.length > 0) {
+            if (charts.maquinasChart) charts.maquinasChart.destroy();
+            
+            // Generar colores únicos dinámicamente
+            function generarColorUnico(index, total) {
+                const hue = (index * 360 / total) % 360;
+                const saturation = 70 + (index % 3) * 10; // 70%, 80%, 90%
+                const lightness = 55 + (index % 4) * 5;   // 55%, 60%, 65%, 70%
+                
+                const color1 = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                const color2 = `hsl(${hue}, ${saturation}%, ${lightness + 15}%)`;
+                
+                return [color1, color2];
+            }
+            
+            const gradientColors = [];
+            const borderColors = [];
+            
+            for (let i = 0; i < maquinasLabels.length; i++) {
+                const [color1, color2] = generarColorUnico(i, maquinasLabels.length);
+                const gradient = maquinasCtx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, color1);
+                gradient.addColorStop(1, color2);
+                gradientColors.push(gradient);
+                borderColors.push(color1);
+            }
+            
+            charts.maquinasChart = new Chart(maquinasCtx, {
+                type: 'bar',
+                data: {
+                    labels: maquinasLabels,
+                    datasets: [{
+                        label: '🔧 Mantenimientos por Máquina',
+                        data: maquinasValues,
+                        backgroundColor: gradientColors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        hoverBackgroundColor: gradientColors.map(color => color),
+                        hoverBorderColor: borderColors,
+                        hoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#2c3e50',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'rectRot'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#2c3e50',
+                                font: {
+                                    size: 12,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#2c3e50',
+                                font: {
+                                    size: 11,
+                                    weight: '500'
+                                },
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+
+        const tiposCtx = document.getElementById('tiposChart') ? document.getElementById('tiposChart').getContext('2d') : null;
+        if (tiposCtx && tiposLabels.length > 0) {
+            if (charts.tiposChart) charts.tiposChart.destroy();
+            
+            // Generar colores únicos para la gráfica de pastel
+            function generarColorPastel(index, total) {
+                const hue = (index * 360 / total) % 360;
+                const saturation = 75 + (index % 2) * 15; // 75%, 90%
+                const lightness = 60 + (index % 3) * 8;   // 60%, 68%, 76%
+                
+                const backgroundColor = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.8)`;
+                const borderColor = `hsl(${hue}, ${saturation + 10}%, ${lightness - 20}%)`;
+                
+                return { backgroundColor, borderColor };
+            }
+            
+            const backgroundColors = [];
+            const borderColors = [];
+            
+            for (let i = 0; i < tiposLabels.length; i++) {
+                const colors = generarColorPastel(i, tiposLabels.length);
+                backgroundColors.push(colors.backgroundColor);
+                borderColors.push(colors.borderColor);
+            }
+            
+            charts.tiposChart = new Chart(tiposCtx, {
+                type: 'pie',
+                data: {
+                    labels: tiposLabels,
+                    datasets: [{
+                        label: '📊 Mantenimientos por Tipo',
+                        data: tiposValues,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 3,
+                        hoverBackgroundColor: backgroundColors.map(color => color.replace('0.8)', '0.9)')),
+                        hoverBorderColor: borderColors,
+                        hoverBorderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#2c3e50',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#fff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    },
+                    interaction: {
+                        intersect: false
+                    }
+                }
+            });
+        }
+    }
+
+    function crearMiniBuscador() {
+        const container = document.createElement('div');
+        container.className = 'historial-search-container';
+        
+        // Obtener el departamento seleccionado actualmente
+        const selectedDept = document.getElementById('departamentoDesarrolladorSelect').value;
+        
+        container.innerHTML = `
+            <h4>🔍 Buscador de Mantenimientos</h4>
+            <div class="search-filters-grid">
+                <div class="search-filter-group">
+                    <label for="searchEmpleado">Número de Empleado:</label>
+                    <input type="text" id="searchEmpleado" placeholder="Ej: 67991">
+                </div>
+                <div class="search-filter-group">
+                    <label for="searchLinea">Línea:</label>
+                    <select id="searchLinea">
+                        <option value="">Todas las líneas</option>
+                        <option value="J01">J01</option>
+                        <option value="J02">J02</option>
+                        <option value="J03">J03</option>
+                        <option value="J05">J05</option>
+                        <option value="J06">J06</option>
+                        <option value="J08">J08</option>
+                        <option value="J09">J09</option>
+                        <option value="J10">J10</option>
+                        <option value="J11">J11</option>
+                    </select>
+                </div>
+                <div class="search-filter-group">
+                    <label for="searchMaquina">Máquina:</label>
+                    <select id="searchMaquina">
+                        <option value="">Todas las máquinas</option>
+                    </select>
+                </div>
+                <div class="search-filter-group">
+                    <label for="searchFechaDesde">Fecha Desde:</label>
+                    <input type="date" id="searchFechaDesde">
+                </div>
+                <div class="search-filter-group">
+                    <label for="searchFechaHasta">Fecha Hasta:</label>
+                    <input type="date" id="searchFechaHasta">
+                </div>
+                <div class="search-filter-group">
+                    <label for="searchTipo">Tipo de Mantenimiento:</label>
+                    <select id="searchTipo">
+                        <option value="">Todos los tipos</option>
+                        <option value="Preventivo">Preventivo</option>
+                        <option value="Correctivo">Correctivo</option>
+                        <option value="Predictivo">Predictivo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="search-buttons">
+                <button class="search-btn primary" onclick="aplicarFiltrosBusqueda()">🔍 Buscar</button>
+                <button class="search-btn secondary" onclick="limpiarFiltrosBusqueda()">🗑️ Limpiar</button>
+            </div>
+        `;
+        
+        // Después de crear el container, actualizar las máquinas según el departamento
+        setTimeout(() => {
+            actualizarMaquinasPorDepartamento(selectedDept);
+        }, 0);
+        
+        return container;
+    }
+    
+    function actualizarMaquinasPorDepartamento(departamento) {
+        const maquinaSelect = document.getElementById('searchMaquina');
+        if (!maquinaSelect) return;
+        
+        const maquinas = maquinasPorDepartamento[departamento] || maquinasPorDepartamento['todos'];
+        
+        // Limpiar opciones actuales
+        maquinaSelect.innerHTML = '<option value="">Todas las máquinas</option>';
+        
+        // Agregar máquinas del departamento seleccionado
+        maquinas.forEach(maquina => {
+            const option = document.createElement('option');
+            option.value = maquina;
+            option.textContent = maquina;
+            maquinaSelect.appendChild(option);
+        });
+    }
+    
+    function aplicarFiltrosBusqueda() {
+        const empleado = document.getElementById('searchEmpleado').value.toLowerCase();
+        const linea = document.getElementById('searchLinea').value;
+        const maquina = document.getElementById('searchMaquina').value;
+        const fechaDesde = document.getElementById('searchFechaDesde').value;
+        const fechaHasta = document.getElementById('searchFechaHasta').value;
+        const tipo = document.getElementById('searchTipo').value;
+        
+        let resultados = historialFiltradoBusqueda.filter(registro => {
+            // Filtro por empleado (número de reloj o nombre)
+            if (empleado && !registro.reloj.toLowerCase().includes(empleado) && !registro.nombre.toLowerCase().includes(empleado)) {
+                return false;
+            }
+            
+            // Filtro por línea
+            if (linea && registro.linea !== linea) {
+                return false;
+            }
+            
+            // Filtro por máquina (ahora exacto, no parcial)
+            if (maquina && registro.maquina !== maquina) {
+                return false;
+            }
+            
+            // Filtro por tipo
+            if (tipo && registro.tipoMantenimiento !== tipo) {
+                return false;
+            }
+            
+            // Filtro por fecha
+            if (fechaDesde || fechaHasta) {
+                const fechaRegistro = new Date(registro.fecha);
+                if (fechaDesde) {
+                    const desde = new Date(fechaDesde);
+                    if (fechaRegistro < desde) return false;
+                }
+                if (fechaHasta) {
+                    const hasta = new Date(fechaHasta);
+                    hasta.setHours(23, 59, 59, 999); // Incluir todo el día
+                    if (fechaRegistro > hasta) return false;
+                }
+            }
+            
+            return true;
+        });
+        
+        const historialDiv = document.getElementById('historial');
+        renderizarListaHistorial(resultados, historialDiv);
+    }
+    
+    function limpiarFiltrosBusqueda() {
+        document.getElementById('searchEmpleado').value = '';
+        document.getElementById('searchLinea').value = '';
+        document.getElementById('searchMaquina').value = '';
+        document.getElementById('searchFechaDesde').value = '';
+        document.getElementById('searchFechaHasta').value = '';
+        document.getElementById('searchTipo').value = '';
+        
+        const historialDiv = document.getElementById('historial');
+        renderizarListaHistorial(historialFiltradoBusqueda, historialDiv);
+    }
+    
+    // Sistema de filtros funcional
+    function aplicarFiltros() {
+        console.log('Aplicando filtros...');
+        
+        const filtroPeriodo = document.getElementById('filtroPeriodo').value;
+        const filtroTipo = document.getElementById('filtroTipo').value;
+        const filtroAnalisis = document.getElementById('filtroAnalisis').value;
+        
+        console.log('Filtros seleccionados:', { filtroPeriodo, filtroTipo, filtroAnalisis });
+        
+        // Re-renderizar gráficas con los filtros aplicados
+        const selectedDept = document.getElementById('departamentoDesarrolladorSelect').value;
+        const selectedLine = document.getElementById('lineaDesarrolladorSelect').value;
+        
+        renderizarGraficasConFiltros(selectedDept, selectedLine, filtroPeriodo, filtroTipo, filtroAnalisis);
+    }
+    
+    function resetearFiltros() {
+        document.getElementById('filtroPeriodo').value = 'todos';
+        document.getElementById('filtroTipo').value = 'todos';
+        document.getElementById('filtroAnalisis').value = 'todos';
+        aplicarFiltros();
+    }
+    
+    function renderizarTodo() {
+        const selectedDept = document.getElementById('departamentoDesarrolladorSelect').value;
+        const selectedLine = document.getElementById('lineaDesarrolladorSelect').value;
+        renderizarHistorial(selectedDept, selectedLine);
+        renderizarGraficas(selectedDept, selectedLine);
+    }
+
+    function generarDatosDeEjemplo() {
+        const maquinas = [
+            "Cargador", "Conveyors", "Rotador", "Ensamble Manual", "Load Tray",
+            "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle",
+            "Yazcawa", "Kuka/CPU Assembly", "Volteador", "Battery", "Banda de FT",
+            "Buffer", "Orbitales FT", "Orbitales ICT", "Elevador de FT",
+            "Elevador Aéreo", "Conveyor Aéreo", "Conveyor de Retorno",
+            "Lava Stencil", "Lava Pallets", "Laser Machine / Selladoras",
+            "Panasonic", "Fuzion", "Axxon", "GKG", "GENITEC", "Heller", "Router", "PTF"
+        ];
+        const tipos = ["Preventivo", "Correctivo", "Predictivo"];
+        const frecuencias = ["semanal", "quincenal", "mensual", "trimestral", "semestral", "anual"];
+        const lineas = ["J01", "J02", "J03", "J05", "J06", "J08", "J09", "J10", "J11"];
+        const usuariosEj = [
+            { reloj: "67991", nombre: "Usuario A" },
+            { reloj: "45670", nombre: "Usuario B" },
+            { reloj: "70654", nombre: "Jxx" },
+            { reloj: "22222", nombre: "María" },
+            { reloj: "11111", nombre: "Pedro" },
+            { reloj: "33333", nombre: "Ana" }
+        ];
+
+        // No limpiar historialMantenimientos, solo agregar datos de ejemplo
+        // historialMantenimientos = []; 
+        const datosEjemplo = [];
+        // Generar datos para cada departamento con fechas recientes
+        const departamentos = ['auto', 'manu', 'equipo', 'pth', 'aoi'];
+        const ahora = new Date();
+        
+        for (let i = 0; i < 500; i++) {
+            // Seleccionar departamento y máquina correspondiente
+            const deptSeleccionado = departamentos[Math.floor(Math.random() * departamentos.length)];
+            const maquinasDelDept = Object.keys(maquinasPorDepartamento).includes(deptSeleccionado) ? 
+                                   maquinasPorDepartamento[deptSeleccionado] : maquinas;
+            const maquina = maquinasDelDept.length > 0 ? 
+                           maquinasDelDept[Math.floor(Math.random() * maquinasDelDept.length)] :
+                           maquinas[Math.floor(Math.random() * maquinas.length)];
+            
+            const tipo = tipos[Math.floor(Math.random() * tipos.length)];
+            const frecuencia = frecuencias[Math.floor(Math.random() * frecuencias.length)];
+            const usuario = usuariosEj[Math.floor(Math.random() * usuariosEj.length)];
+            const linea = lineas[Math.floor(Math.random() * lineas.length)];
+            
+            // Generar fechas distribuidas en los últimos 2 años (730 días)
+            let diasAtras;
+            const rand = Math.random();
+            
+            if (rand < 0.3) {
+                // 30% en los últimos 30 días (datos recientes)
+                diasAtras = Math.random() * 30;
+            } else if (rand < 0.5) {
+                // 20% entre 30-90 días (trimestre pasado)
+                diasAtras = 30 + Math.random() * 60;
+            } else if (rand < 0.7) {
+                // 20% entre 90-365 días (primer año)
+                diasAtras = 90 + Math.random() * 275;
+            } else {
+                // 30% entre 365-730 días (segundo año)
+                diasAtras = 365 + Math.random() * 365;
+            }
+            
+            const fechaBase = ahora.getTime() - (diasAtras * 24 * 60 * 60 * 1000);
+            const fecha = new Date(fechaBase).toISOString();
+
+            const nuevoMantenimiento = {
+                fecha: fecha,
+                reloj: usuario.reloj,
+                nombre: usuario.nombre,
+                maquina: maquina,
+                frecuencia: frecuencia,
+                tipoMantenimiento: tipo,
+                comentarios: "Mantenimiento de ejemplo.",
+                fotosAntes: [],    // sin imágenes de ejemplo
+                fotosDespues: [],  // sin imágenes de ejemplo
+                linea: linea
+            };
+            datosEjemplo.push(nuevoMantenimiento);
+        }
+        
+        // Combinar datos existentes con datos de ejemplo
+        historialMantenimientos = historialMantenimientos.concat(datosEjemplo);
+        localStorage.setItem('historialMantenimientos', JSON.stringify(historialMantenimientos));
+        alert(`Se han agregado 500 mantenimientos de ejemplo distribuidos en 2 años. Total de registros: ${historialMantenimientos.length}`);
+        console.log('Datos generados (muestra):', datosEjemplo.slice(0, 5)); // Mostrar los primeros 5 para verificar
+        console.log('Rango de fechas:', {
+            mas_reciente: datosEjemplo.reduce((a, b) => new Date(a.fecha) > new Date(b.fecha) ? a : b).fecha,
+            mas_antigua: datosEjemplo.reduce((a, b) => new Date(a.fecha) < new Date(b.fecha) ? a : b).fecha
+        });
+        renderizarTodo();
+    }
+    
+    function populateMachineDropdown(lineId) {
+        const select = document.getElementById("maquinasHoy" + lineId);
+        const maquinas = maquinasPorLinea[lineId];
+        if (!select) return;
+        select.innerHTML = '<option value="">-- Selecciona una máquina --</option>';
+        if (maquinas) {
+            maquinas.forEach(maquina => {
+                const option = document.createElement("option");
+                option.value = maquina;
+                option.text = maquina;
+                select.appendChild(option);
+            });
+        }
+    }
+</script>
+</head>
+<body>
+<div class="container section visible" id="login">
+    <h1>Bienvenido al sistema TPM</h1>
+    <label for="reloj">Número de reloj:</label>
+    <input id="reloj" type="text" onkeydown="handleEnter(event, 'pass', null)"/>
+    <label for="pass">Contraseña:</label>
+    <div class="password-wrapper">
+        <input id="pass" type="password" onkeydown="handleEnter(event, null, 'loginButton')"/>
+        <span class="toggle-password" onclick="togglePasswordVisibility('pass')">👁️</span>
+    </div>
+    <div class="checkbox-container">
+        <input type="checkbox" id="rememberLogin">
+        <label for="rememberLogin">Recordar mi reloj y contraseña</label>
+    </div>
+    <br>
+    <button id="loginButton" onclick="validarLogin()">Ingresar</button>
+    <div class="developer-login">
+        <h3>Modo Desarrollador</h3>
+        <label for="dev_reloj">Usuario Desarrollador:</label>
+        <input id="dev_reloj" type="text" onkeydown="handleEnter(event, 'dev_pass', null)"/>
+        <label for="dev_pass">Contraseña Desarrollador:</label>
+        <div class="password-wrapper">
+            <input id="dev_pass" type="password" onkeydown="handleEnter(event, null, 'devLoginButton')"/>
+            <span class="toggle-password" onclick="togglePasswordVisibility('dev_pass')">👁️</span>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" id="rememberDevLogin">
+            <label for="rememberDevLogin">Recordar usuario y contraseña de desarrollador</label>
+        </div>
+        <br>
+        <button id="devLoginButton" onclick="validarDesarrollador()">Entrar como Desarrollador</button>
+    </div>
+</div>
+
+<div class="container section" id="areas">
+    <h2>Áreas disponibles</h2>
+    <div class="departments-scroll-area">
+        <div class="area-block">
+            <p>Automatización</p>
+            <div class="password-wrapper">
+                <input id="area_pass_1" type="password" placeholder="Contraseña del área" onkeydown="handleEnter(event, null, 'enterArea1Button')"/>
+                <span class="toggle-password" onclick="togglePasswordVisibility('area_pass_1')">👁️</span>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="rememberDept_1">
+                <label for="rememberDept_1">Recordar contraseña de esta área</label>
+            </div>
+            <br>
+            <button id="enterArea1Button" onclick="validarArea('1')">Entrar</button>
+        </div>
+        <div class="area-block">
+            <p>Manufactura</p>
+            <div class="password-wrapper">
+                <input id="area_pass_2" type="password" placeholder="Contraseña del área" onkeydown="handleEnter(event, null, 'enterArea2Button')"/>
+                <span class="toggle-password" onclick="togglePasswordVisibility('area_pass_2')">👁️</span>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="rememberDept_2">
+                <label for="rememberDept_2">Recordar contraseña de esta área</label>
+            </div>
+            <br>
+            <button id="enterArea2Button" onclick="validarArea('2')">Entrar</button>
+        </div>
+        <div class="area-block">
+            <p>Equipo</p>
+            <div class="password-wrapper">
+                <input id="area_pass_3" type="password" placeholder="Contraseña del área" onkeydown="handleEnter(event, null, 'enterArea3Button')"/>
+                <span class="toggle-password" onclick="togglePasswordVisibility('area_pass_3')">👁️</span>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="rememberDept_3">
+                <label for="rememberDept_3">Recordar contraseña de esta área</label>
+            </div>
+            <br>
+            <button id="enterArea3Button" onclick="validarArea('3')">Entrar</button>
+        </div>
+        <div class="area-block">
+            <p>PTH</p>
+            <div class="password-wrapper">
+                <input id="area_pass_4" type="password" placeholder="Contraseña del área" onkeydown="handleEnter(event, null, 'enterArea4Button')"/>
+                <span class="toggle-password" onclick="togglePasswordVisibility('area_pass_4')">👁️</span>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="rememberDept_4">
+                <label for="rememberDept_4">Recordar contraseña de esta área</label>
+            </div>
+            <br>
+            <button id="enterArea4Button" onclick="validarArea('4')">Entrar</button>
+        </div>
+        <div class="area-block">
+            <p>AOI</p>
+            <div class="password-wrapper">
+                <input id="area_pass_5" type="password" placeholder="Contraseña del área" onkeydown="handleEnter(event, null, 'enterArea5Button')"/>
+                <span class="toggle-password" onclick="togglePasswordVisibility('area_pass_5')">👁️</span>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="rememberDept_5">
+                <label for="rememberDept_5">Recordar contraseña de esta área</label>
+            </div>
+            <br>
+            <button id="enterArea5Button" onclick="validarArea('5')">Entrar</button>
+        </div>
+    </div>
+    <button onclick="goBack()">Regresar</button>
+</div>
+
+<div class="container section" id="maquinas_auto">
+    <div class="auto-header">
+        <h2>🤖 Máquinas de Automatización</h2>
+    </div>
+    <div class="machines-scroll-area">
+        <script>
+            const maquinas_auto = [
+                "Cargador", "Conveyors", "Rotador", "Ensamble Manual", "Load Tray",
+                "Insert y Remove Pallet", "Sliding", "Carrier Machine", "Shuttle",
+                "Yazcawa", "Kuka/CPU Assembly", "Volteador", "Battery", "Banda de FT",
+                "Buffer", "Orbitales FT", "Orbitales ICT", "Elevador de FT",
+                "Elevador Aéreo", "Conveyor Aéreo", "Conveyor de Retorno",
+                "Lava Stencil", "Lava Pallets", "Laser Machine / Selladoras"
+            ];
+            document.write(maquinas_auto.map(m => {
+                if (m === "Cargador") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Cargador', 'maquinas_auto')"> <img src="image_e37a60.png" alt="Imagen de Cargador"> <span>Cargador</span> </div>`;
+                } else if (m === "Conveyors") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Conveyors', 'maquinas_auto')"> <img src="image_ee7644.png" alt="Imagen de Conveyors"> <span>Conveyors</span> </div>`;
+                } else if (m === "Rotador") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Rotador', 'maquinas_auto')"> <img src="image_87f926.png" alt="Imagen de Rotador"> <span>Rotador</span> </div>`;
+                } else if (m === "Ensamble Manual") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Ensamble Manual', 'maquinas_auto')"> <img src="image_880f8f.png" alt="Imagen de Ensamble Manual"> <span>Ensamble Manual</span> </div>`;
+                } else if (m === "Load Tray") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Load Tray', 'maquinas_auto')"> <img src="image_886a7a.png" alt="Imagen de Load Tray"> <span>Load Tray</span> </div>`;
+                } else if (m === "Insert y Remove Pallet") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Insert y Remove Pallet', 'maquinas_auto')"> <img src="image_insert_remove.png" alt="Imagen de Insert y Remove Pallet"> <span>Insert y Remove Pallet</span> </div>`;
+                } else if (m === "Sliding") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Sliding', 'maquinas_auto')"> <img src="image_dfd1c2.png" alt="Imagen de Sliding"> <span>Sliding</span> </div>`;
+                } else if (m === "Carrier Machine") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Carrier Machine', 'maquinas_auto')"> <img src="image_dfdd22.png" alt="Imagen de Carrier Machine"> <span>Carrier Machine</span> </div>`;
+                } else if (m === "Shuttle") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Shuttle', 'maquinas_auto')"> <img src="image_e03a80.png" alt="Imagen de Shuttle"> <span>Shuttle</span> </div>`;
+                } else if (m === "Yazcawa") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Yazcawa', 'maquinas_auto')"> <img src="image_ec8885.png" alt="Imagen de Yazcawa"> <span>Yazcawa</span> </div>`;
+                } else if (m === "Kuka/CPU Assembly") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Kuka/CPU Assembly', 'maquinas_auto')"> <img src="image_ec0027.png" alt="Imagen de Kuka/CPU Assembly"> <span>Kuka/CPU Assembly</span> </div>`;
+                } else if (m === "Volteador") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Volteador', 'maquinas_auto')"> <img src="image_ec0127.png" alt="Imagen de Volteador"> <span>Volteador</span> </div>`;
+                } else if (m === "Battery") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Battery', 'maquinas_auto')"> <img src="image_ec0227.png" alt="Imagen de Battery"> <span>Battery</span> </div>`;
+                } else if (m === "Banda de FT") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Banda de FT', 'maquinas_auto')"> <img src="image_ec0327.png" alt="Imagen de Banda de FT"> <span>Banda de FT</span> </div>`;
+                } else if (m === "Buffer") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Buffer', 'maquinas_auto')"> <img src="image_ec0427.png" alt="Imagen de Buffer"> <span>Buffer</span> </div>`;
+                } else if (m === "Orbitales FT") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Orbitales FT', 'maquinas_auto')"> <img src="image_ec0527.png" alt="Imagen de Orbitales FT"> <span>Orbitales FT</span> </div>`;
+                } else if (m === "Orbitales ICT") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Orbitales ICT', 'maquinas_auto')"> <img src="image_ec0627.png" alt="Imagen de Orbitales ICT"> <span>Orbitales ICT</span> </div>`;
+                } else if (m === "Elevador de FT") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Elevador de FT', 'maquinas_auto')"> <img src="image_ec0727.png" alt="Imagen de Elevador de FT"> <span>Elevador de FT</span> </div>`;
+                } else if (m === "Elevador Aéreo") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Elevador Aéreo', 'maquinas_auto')"> <img src="image_ec0827.png" alt="Imagen de Elevador Aéreo"> <span>Elevador Aéreo</span> </div>`;
+                } else if (m === "Conveyor Aéreo") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Conveyor Aéreo', 'maquinas_auto')"> <img src="image_ec0927.png" alt="Imagen de Conveyor Aéreo"> <span>Conveyor Aéreo</span> </div>`;
+                } else if (m === "Conveyor de Retorno") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Conveyor de Retorno', 'maquinas_auto')"> <img src="image_ef5127.png" alt="Imagen de Conveyor de Retorno"> <span>Conveyor de Retorno</span> </div>`;
+                } else if (m === "Lava Stencil") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Lava Stencil', 'maquinas_auto')"> <img src="image_5dd18a.png" alt="Imagen de Lava Stencil"> <span>Lava Stencil</span> </div>`;
+                } else if (m === "Lava Pallets") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Lava Pallets', 'maquinas_auto')"> <img src="image_5e4265.png" alt="Imagen de Lava Pallets"> <span>Lava Pallets</span> </div>`;
+                } else if (m === "Laser Machine / Selladoras") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Laser Machine / Selladoras', 'maquinas_auto')"> <img src="image_5e45ea.png" alt="Imagen de Laser Machine / Selladoras"> <span>Laser Machine / Selladoras</span> </div>`;
+                }
+            }).join(''));
+        </script>
+    </div>
+    <div class="auto-actions">
+        <button class="mantenimiento-btn-modern" onclick="mostrarSeccion('mantenimiento')">
+            🔧 <span>Mantenimiento</span>
+        </button>
+        <button class="back-btn-modern" onclick="goBack()">
+            ← <span>Regresar</span>
+        </button>
+    </div>
+</div>
+
+<div class="container section" id="maquinas_equipo">
+    <h2>Máquinas en Equipo</h2>
+    <div class="machines-scroll-area">
+        <script>
+            const maquinas_equipo = [
+                "Panasonic", "Fuzion", "Axxon", "GKG", "GENITEC", "Heller", "Router", "PTF"
+            ];
+            document.write(maquinas_equipo.map(m => {
+                if (m === "Panasonic") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Panasonic', 'maquinas_equipo')"> <img src="image_5f3214.png" alt="Imagen de Panasonic"> <span>Panasonic</span> </div>`;
+                } else if (m === "Fuzion") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Fuzion', 'maquinas_equipo')"> <img src="image_5f3234.png" alt="Imagen de Fuzion"> <span>Fuzion</span> </div>`;
+                } else if (m === "Axxon") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Axxon', 'maquinas_equipo')"> <img src="image_5f3259.png" alt="Imagen de Axxon"> <span>Axxon</span> </div>`;
+                } else if (m === "GKG") {
+                    return `<div class="machine-item" onclick="mostrarSpare('GKG', 'maquinas_equipo')"> <img src="image_5f327a.png" alt="Imagen de GKG"> <span>GKG</span> </div>`;
+                } else if (m === "GENITEC") {
+                    return `<div class="machine-item" onclick="mostrarSpare('GENITEC', 'maquinas_equipo')"> <img src="image_5f3283.png" alt="Imagen de GENITEC"> <span>GENITEC</span> </div>`;
+                } else if (m === "Heller") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Heller', 'maquinas_equipo')"> <img src="image_5f32a5.png" alt="Imagen de Heller"> <span>Heller</span> </div>`;
+                } else if (m === "Router") {
+                    return `<div class="machine-item" onclick="mostrarSpare('Router', 'maquinas_equipo')"> <img src="image_5f496b.png" alt="Imagen de Router"> <span>Router</span> </div>`;
+                } else if (m === "PTF") {
+                    return `<div class="machine-item" onclick="mostrarSpare('PTF', 'maquinas_equipo')"> <img src="image_5f4a6c.png" alt="Imagen de PTF"> <span>PTF</span> </div>`;
+                }
+            }).join(''));
+        </script>
+    </div>
+    <button onclick="goBack()">Regresar</button>
+</div>
+
+<div class="container section" id="mantenimiento">
+    <h2>Mantenimiento</h2>
+    <div class="mantenimiento-form-container">
+        <div class="form-group">
+            <label for="reloj1">Número de reloj:</label>
+            <input id="reloj1" type="text" oninput="mostrarNombreUsuario('1')" onkeydown="handleEnter(event, 'maquinasHoy1')"/>
+        </div>
+        <div class="form-group">
+            <label for="nombreUsuario1">Nombre de la persona:</label>
+            <input id="nombreUsuario1" type="text" readonly/>
+        </div>
+        <div class="form-group">
+            <label for="lineaMantenimiento">Línea:</label>
+            <select id="lineaMantenimiento">
+                <option value="J01">J01</option>
+                <option value="J02">J02</option>
+                <option value="J03">J03</option>
+                <option value="J05">J05</option>
+                <option value="J06">J06</option>
+                <option value="J08">J08</option>
+                <option value="J09">J09</option>
+                <option value="J10">J10</option>
+                <option value="J11">J11</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="maquinasHoy1">Máquina:</label>
+            <select id="maquinasHoy1">
+                <option value="">-- Selecciona una máquina --</option>
+                <option value="Cargador">Cargador</option>
+                <option value="Conveyors">Conveyors</option>
+                <option value="Ensamble Manual">Ensamble Manual</option>
+                <option value="Load Tray">Load Tray</option>
+                <option value="Insert y Remove Pallet">Insert y Remove Pallet</option>
+                <option value="Sliding">Sliding</option>
+                <option value="Carrier Machine">Carrier Machine</option>
+                <option value="Shuttle">Shuttle</option>
+                <option value="Yazcawa">Yazcawa</option>
+                <option value="Kuka/CPU Assembly">Kuka/CPU Assembly</option>
+                <option value="Rotador">Rotador</option>
+            </select>
+            <button onclick="verMaquinaSeleccionada('1')">Ver detalles de la máquina</button>
+        </div>
+        <div class="form-group">
+            <label for="frecuenciaMantenimiento1">Frecuencia:</label>
+            <select id="frecuenciaMantenimiento1">
+                <option value="diario">Diario</option>
+                <option value="semanal" selected>Semanal</option>
+                <option value="quincenal">Quincenal</option>
+                <option value="mensual">Mensual</option>
+                <option value="trimestral">Trimestral</option>
+                <option value="semestral">Semestral</option>
+                <option value="anual">Anual</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="tipoMantenimiento1">Tipo de Mantenimiento:</label>
+            <select id="tipoMantenimiento1">
+                <option value="Preventivo">Preventivo</option>
+                <option value="Correctivo">Correctivo</option>
+                <option value="Predictivo">Predictivo</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="comentarios_1">Comentarios:</label>
+            <textarea id="comentarios_1" rows="4"></textarea>
+        </div>
+        <div class="file-upload-section">
+            <div class="form-group">
+                <label for="fotosAntes1">Fotos Antes:</label>
+                <input type="file" id="fotosAntes1" multiple accept="image/*"/>
+            </div>
+            <div class="form-group">
+                <label for="fotosDespues1">Fotos Después:</label>
+                <input type="file" id="fotosDespues1" multiple accept="image/*"/>
+            </div>
+        </div>
+    </div>
+    <div class="mantenimiento-form-buttons">
+        <button class="save-button" onclick="guardarMantenimiento('1')">Guardar Mantenimiento</button>
+        <button class="back-button" onclick="goBack()">Regresar</button>
+    </div>
+</div>
+
+<div class="container section" id="developer_mode">
+    <h2>Modo Desarrollador</h2>
+    <label for="departamentoDesarrolladorSelect">Departamento:</label>
+    <select id="departamentoDesarrolladorSelect" onchange="actualizarLineasPorDepartamento()">
+        <option value="todos">Todos los departamentos</option>
+        <option value="auto">Automatización</option>
+        <option value="manu">Manufactura</option>
+        <option value="equipo">Equipo</option>
+        <option value="pth">PTH</option>
+        <option value="aoi">AOI</option>
+    </select>
+    <label for="lineaDesarrolladorSelect">Línea:</label>
+    <select id="lineaDesarrolladorSelect" onchange="renderizarTodo()">
+        <option value="todos">Todas las líneas</option>
+        <option value="J01">J01</option>
+        <option value="J02">J02</option>
+        <option value="J03">J03</option>
+        <option value="J05">J05</option>
+        <option value="J06">J06</option>
+        <option value="J08">J08</option>
+        <option value="J09">J09</option>
+        <option value="J10">J10</option>
+        <option value="J11">J11</option>
+    </select>
+    <button onclick="toggleHistorial()" id="toggleHistorialBtn">Ver Historial</button>
+    <div id="historial"></div>
+    <div class="graficas-section">
+        <h3>Gráficas de Mantenimiento</h3>
+        
+        <!-- Panel de Filtros Funcional -->
+        <div class="filtros-panel">
+            <h3>🔍 Filtros de Gráficas</h3>
+            
+            <div class="filtros-container">
+                <!-- Filtros por Período -->
+                <div class="filtro-grupo">
+                    <label>📅 Período de Tiempo:</label>
+                    <select id="filtroPeriodo" onchange="aplicarFiltros()">
+                        <option value="todos">Todos los registros</option>
+                        <option value="semana">Última semana (7 días)</option>
+                        <option value="mes">Último mes (30 días)</option>
+                        <option value="trimestre">Último trimestre (90 días)</option>
+                        <option value="semestre">Último semestre (180 días)</option>
+                        <option value="año">Último año (365 días)</option>
+                    </select>
+                </div>
+                
+                <!-- Filtros por Tipo de Mantenimiento -->
+                <div class="filtro-grupo">
+                    <label>🔧 Tipo de Mantenimiento:</label>
+                    <select id="filtroTipo" onchange="aplicarFiltros()">
+                        <option value="todos">Todos los tipos</option>
+                        <option value="preventivo">Solo Preventivo</option>
+                        <option value="correctivo">Solo Correctivo</option>
+                        <option value="predictivo">Solo Predictivo</option>
+                    </select>
+                </div>
+                
+                <!-- Filtro de Máquinas Problemáticas -->
+                <div class="filtro-grupo">
+                    <label>🔴 Análisis Especial:</label>
+                    <select id="filtroAnalisis" onchange="aplicarFiltros()">
+                        <option value="todos">Todas las máquinas</option>
+                        <option value="problematicas">Máquinas problemáticas (>5 mantenimientos)</option>
+                        <option value="criticas">Máquinas críticas (>10 mantenimientos)</option>
+                    </select>
+                </div>
+                
+                <!-- Botón de Reset -->
+                <div class="filtro-grupo">
+                    <button onclick="resetearFiltros()" class="btn-reset">🔄 Limpiar Filtros</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grafica-container">
+            <canvas id="maquinasChart"></canvas>
+        </div>
+        <div class="grafica-container">
+            <canvas id="tiposChart"></canvas>
+        </div>
+    </div>
+    <button onclick="generarDatosDeEjemplo()">Generar datos de ejemplo</button>
+    <button onclick="goBack()">Regresar</button>
+</div>
+
+<div class="container section" id="maquina_detalle">
+    <h2 id="maquina_detalle_title"></h2>
+    <img id="maquina_detalle_image" style="display:none;"/>
+    <button onclick="goBack()">Regresar</button>
+</div>
+
+<div class="container section" id="spare">
+    <h2 id="spare_title"></h2>
+    <p>Aquí debería ir la información de las refacciones.</p>
+    <button onclick="goBack()">Regresar</button>
+</div>
+
+<div class="container section" id="detalle_mantenimiento">
+    <div id="detalle_content"></div>
+    <button onclick="goBack()">Regresar</button>
+</div>
+</body>
+</html>
